@@ -10,47 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  build-and-push:
+  push:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-
-      # Debug npm Authentication Setup
-      - name: Ensure Correct npm Registry
-        run: |
-          npm config set registry https://registry.npmjs.org/
-          npm config get registry  # Should return "https://registry.npmjs.org/"
-
-      - name: Authenticate npm
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
-          cat ~/.npmrc  # Debugging: Verify if token is correctly set
-
-      - name: Install Node.js and NPM
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18  
-
-      - name: Verify npm Authentication
-        run: npm whoami || echo "Authentication failed"
-
-      - name: Install Dependencies
-        run: |
-          cd npm-package
-          npm install  
-
-      - name: Build NPM Package (Generate .tgz)
-        run: |
-          cd npm-package
-          npm pack 
-          ls -l  # Debugging: Check if the .tgz file is created
-
-      # Find the generated package file dynamically
-      - name: Find Generated Package File
-        run: |
-          cd npm-package
-          echo "PACKAGE_FILE=$(ls *.tgz)" >> $GITHUB_ENV
 
       - name: Generate OIDC Token
         run: |
@@ -66,6 +30,7 @@ jobs:
           https://api.cloudsmith.io/openid/rini-jain-RNYE/)
 
           final_api_token=$(echo $token_final | jq -r '.token')
+
           echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
 
       - name: Push NPM Package to Cloudsmith
@@ -76,8 +41,16 @@ jobs:
           format: "npm"
           owner: "rini-jain-RNYE"  
           repo: "cloudsmith-gha-setup"  
-          file: "npm-package/${{ env.PACKAGE_FILE }}" 
+          file: "npm-package/npm-package-1.0.0.tgz"
           republish: "true"
+
+      - name: Debug Cloudsmith Inputs
+        run: |
+          echo "Cloudsmith API Key: $CLOUDSMITH_API_KEY"
+          echo "Format: npm"
+          echo "Owner: rini-jain-RNYE"
+          echo "Repo: cloudsmith-gha-setup"
+          echo "File: npm-package/npm-package-1.0.0.tgz"
 
       - name: Debug Cloudsmith API Call
         run: |

@@ -10,12 +10,27 @@ permissions:
   contents: read
 
 jobs:
-  push:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
 
+      - name: Install Node.js and NPM
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18  
+
+      - name: Install Dependencies
+        run: |
+          cd npm-package
+          npm install  
+
+      - name: Build NPM Package (Generate .tgz)
+        run: |
+          cd npm-package
+          npm pack 
+          ls -l
       - name: Generate OIDC Token
         run: |
           echo "Requesting OIDC Token..."
@@ -30,7 +45,6 @@ jobs:
           https://api.cloudsmith.io/openid/rini-jain-RNYE/)
 
           final_api_token=$(echo $token_final | jq -r '.token')
-
           echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
 
       - name: Push NPM Package to Cloudsmith
@@ -41,16 +55,8 @@ jobs:
           format: "npm"
           owner: "rini-jain-RNYE"  
           repo: "cloudsmith-gha-setup"  
-          file: "npm-package/npm-package-1.0.0.tgz"
+          file: "$(ls npm-package/*.tgz)"  # This ensures the latest .tgz file is picked
           republish: "true"
-
-      - name: Debug Cloudsmith Inputs
-        run: |
-          echo "Cloudsmith API Key: $CLOUDSMITH_API_KEY"
-          echo "Format: npm"
-          echo "Owner: rini-jain-RNYE"
-          echo "Repo: cloudsmith-gha-setup"
-          echo "File: npm-package/npm-package-1.0.0.tgz"
 
       - name: Debug Cloudsmith API Call
         run: |

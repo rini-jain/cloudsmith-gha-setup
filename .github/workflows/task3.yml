@@ -59,14 +59,14 @@ jobs:
 
       # Step 8: Push the Package to Cloudsmith
       - name: Push Package to Cloudsmith
-        uses: cloudsmith-io/action@master
+        uses: cloudsmith-io/action@v0.5.3
         with:
           api-key: ${{ env.CLOUDSMITH_API_KEY }}
           command: "push"
           format: "npm"
           owner: "rini-jain-RNYE"  
           repo: "cloudsmith-gha-setup"
-          file: "*.tgz"
+          file: '*.tgz'
           republish: "true"
 
      

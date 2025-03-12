@@ -3,7 +3,7 @@ name: Cloudsmith OIDC Task 3
 on:
   push:
     branches:
-      - main  # Runs on push to the main branch
+      - main
 
 permissions:
   id-token: write  
@@ -18,32 +18,39 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      # Step 2: Set up Node.js and npm
+      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # Step 3: Install dependencies (if required)
+      # Step 3: Authenticate npm (Fixes E401 Error)
+      - name: Authenticate npm
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
+          npm config set registry https://registry.npmjs.org/
+          npm whoami || echo "❌ npm authentication failed"
+
+      # Step 4: Install dependencies (chalk)
       - name: Install Dependencies
         run: |
           cd npm-package
           npm install
 
-      # Step 4: Create a package using npm pack
+      # Step 5: Create a package using npm pack
       - name: Build NPM Package
         run: |
           cd npm-package
           npm pack
           ls -l  # Debugging: List files to verify .tgz was created
 
-      # Step 5: Find the generated package file and store it in an env variable
+      # Step 6: Find the generated package file and store it in an env variable
       - name: Find Package File
         run: |
           cd npm-package
           echo "PACKAGE_FILE=$(ls *.tgz)" >> $GITHUB_ENV
 
-      # Step 6: Generate OIDC Token for Cloudsmith Authentication
+      # Step 7: Generate OIDC Token for Cloudsmith Authentication
       - name: Generate OIDC Token
         run: |
           echo "Requesting OIDC Token..."
@@ -60,7 +67,7 @@ jobs:
           final_api_token=$(echo $token_final | jq -r '.token')
           echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
 
-      # Step 7: Push the Package to Cloudsmith
+      # Step 8: Push the Package to Cloudsmith
       - name: Push Package to Cloudsmith
         uses: cloudsmith-io/action@master
         with:
@@ -72,7 +79,7 @@ jobs:
           file: "npm-package/${{ env.PACKAGE_FILE }}"
           republish: "true"
 
-      # Step 8: Debug Cloudsmith API Call
+      # Step 9: Debug Cloudsmith API Call
       - name: Debug Cloudsmith API
         run: |
           echo "Checking Cloudsmith Repository Access..."

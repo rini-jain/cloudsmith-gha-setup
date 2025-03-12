@@ -35,5 +35,5 @@ jobs:
           format: "raw"
           owner: "rini-jain-RNYE"  
           repo: "cloudsmith-gha-setup"  
-          file: "sample-package.zip"
+          file: "my-package.zip"
           republish: "true"

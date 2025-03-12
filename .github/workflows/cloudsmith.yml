@@ -47,8 +47,15 @@ jobs:
         with:
           api-key: ${{ env.CLOUDSMITH_API_KEY }}
           command: "push"
-          
+          format: "raw"
           owner: "rini-jain-RNYE"  
           repo: "cloudsmith-gha-setup"  
           file: "./my-package.zip"
           republish: "true"
+      - name: Debug Cloudsmith Inputs
+        run: |
+          echo "Cloudsmith API Key: $CLOUDSMITH_API_KEY"
+          echo "Format: raw"
+          echo "Owner: rini-jain-RNYE"
+          echo "Repo: cloudsmith-gha-setup"
+          echo "File: ./my-package.zip"

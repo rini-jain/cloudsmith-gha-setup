@@ -59,3 +59,8 @@ jobs:
           echo "Owner: rini-jain-RNYE"
           echo "Repo: cloudsmith-gha-setup"
           echo "File: ./my-package.zip"
+      - name: Debug Cloudsmith API Call
+        run: |
+          echo "Checking Cloudsmith Repository Access..."
+          curl -X GET "https://api.cloudsmith.io/v1/repos/rini-jain-RNYE/cloudsmith-gha-setup/" \
+          -H "Authorization: Bearer $CLOUDSMITH_API_KEY"

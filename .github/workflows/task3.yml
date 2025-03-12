@@ -24,12 +24,22 @@ jobs:
         with:
           node-version: 18
 
-      # Step 3: Authenticate npm (Fixes E401 Error)
+      # Debug Step 1: Check if npm registry is correctly set
+      - name: Ensure Correct npm Registry
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm config get registry  # Should return "https://registry.npmjs.org/"
+
+      # Debug Step 2: Authenticate npm
       - name: Authenticate npm
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
-          npm config set registry https://registry.npmjs.org/
-          npm whoami || echo "❌ npm authentication failed"
+          cat ~/.npmrc || echo "❌ No .npmrc file found"
+
+      # Debug Step 3: Verify npm Authentication
+      - name: Check npm Authentication
+        run: npm whoami || echo "❌ npm authentication failed"
+
 
       # Step 4: Install dependencies (chalk)
       - name: Install Dependencies

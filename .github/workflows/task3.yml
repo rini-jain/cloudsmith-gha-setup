@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  id-token: write  
+  id-token: write
   contents: read
 
 jobs:
@@ -24,27 +24,30 @@ jobs:
         with:
           node-version: 18
 
-    
+      # Step 3: Install Dependencies
       - name: Install Dependencies
         run: |
           cd npm-package
           npm install
 
-
-      # Step 5: Create a package using npm pack
+      # Step 4: Build NPM Package (Generate .tgz file)
       - name: Build NPM Package
         run: |
           cd npm-package
           npm pack
-         
+          ls -l  # Debug: Verify the .tgz file was created
 
-    
+      # Step 5: Capture the Generated .tgz Filename
+      - name: Find Package File
+        run: |
+          cd npm-package
+          echo "PACKAGE_FILE=$(ls *.tgz)" >> $GITHUB_ENV
+          echo "Discovered package file: $PACKAGE_FILE"
 
-      # Step 7: Generate OIDC Token for Cloudsmith Authentication
+      # Step 6: Generate OIDC Token for Cloudsmith Authentication
       - name: Generate OIDC Token
         run: |
           echo "Requesting OIDC Token..."
-          
           value=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
           "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/rini-jain")
 
@@ -57,16 +60,14 @@ jobs:
           final_api_token=$(echo $token_final | jq -r '.token')
           echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
 
-      # Step 8: Push the Package to Cloudsmith
+      # Step 7: Push Package to Cloudsmith (Referencing $PACKAGE_FILE)
       - name: Push Package to Cloudsmith
         uses: cloudsmith-io/action@v0.5.3
         with:
           api-key: ${{ env.CLOUDSMITH_API_KEY }}
           command: "push"
           format: "npm"
-          owner: "rini-jain-RNYE"  
+          owner: "rini-jain-RNYE"
           repo: "cloudsmith-gha-setup"
-          file: '*.tgz'
+          file: "npm-package/${{ env.PACKAGE_FILE }}"
           republish: "true"
-
-     

@@ -16,24 +16,31 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      - name: Get OIDC token
+      - name: Generate OIDC Token
         run: |
           echo "Requesting OIDC Token..."
           
           value=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" | jq -r '.value')
+          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/rini-jain")
 
-          token=$(curl -X POST -H "Content-Type: application/json" \
-          -d "{\"oidc_token\":\"$value\", \"service_slug\":\"github-actions-oidc\"}" \
-          https://api.cloudsmith.io/openid/rini-jain-RNYE/ | jq -r '.token')
+          echo "Raw Token Response: $value"
 
-          if [[ -z "$token" ]]; then
-            echo "ERROR: Cloudsmith API token generation failed!"
-            exit 1
-          fi
+          token=$(echo $value | jq '.value')
 
-          echo "Cloudsmith API Token retrieved successfully!"
-          echo "CLOUDSMITH_API_KEY=$token" >> $GITHUB_ENV
+          echo "Extracted Token: $token"
+
+          token_final=$(curl -X POST -H "Content-Type: application/json" \
+          -d "{\"oidc_token\":$token, \"service_slug\":\"github-actions-oidc\"}" \
+          https://api.cloudsmith.io/openid/rini-jain-RNYE/)
+
+          echo "Cloudsmith Response: $token_final"
+
+          final_api_token=$(echo $token_final | jq -r '.token')
+
+          echo "Final Cloudsmith API Token: $final_api_token"
+
+          echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
+
 
       - name: Push Package to Cloudsmith
         uses: cloudsmith-io/action@master

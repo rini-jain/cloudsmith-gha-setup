@@ -47,8 +47,8 @@ jobs:
         with:
           api-key: ${{ env.CLOUDSMITH_API_KEY }}
           command: "push"
-          format: "raw"
+          
           owner: "rini-jain-RNYE"  
           repo: "cloudsmith-gha-setup"  
-          file: "my-package.zip"
+          file: "./my-package.zip"
           republish: "true"

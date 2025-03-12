@@ -31,7 +31,6 @@ jobs:
 
           final_api_token=$(echo $token_final | jq -r '.token')
 
-          echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
 
       - name: Push NPM Package to Cloudsmith
         uses: cloudsmith-io/action@master
@@ -44,16 +43,4 @@ jobs:
           file: "npm-package/npm-package-1.0.0.tgz"
           republish: "true"
 
-      - name: Debug Cloudsmith Inputs
-        run: |
-          echo "Cloudsmith API Key: $CLOUDSMITH_API_KEY"
-          echo "Format: npm"
-          echo "Owner: rini-jain-RNYE"
-          echo "Repo: cloudsmith-gha-setup"
-          echo "File: npm-package/npm-package-1.0.0.tgz"
-
-      - name: Debug Cloudsmith API Call
-        run: |
-          echo "Checking Cloudsmith Repository Access..."
-          curl -X GET "https://api.cloudsmith.io/v1/repos/rini-jain-RNYE/cloudsmith-gha-setup/" \
-          -H "Authorization: Bearer $CLOUDSMITH_API_KEY"
+      

@@ -16,13 +16,24 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
+      # Debug npm Authentication Setup
+      - name: Ensure Correct npm Registry
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm config get registry  # Should return "https://registry.npmjs.org/"
+
       - name: Authenticate npm
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
+          cat ~/.npmrc  # Debugging: Verify if token is correctly set
 
       - name: Install Node.js and NPM
         uses: actions/setup-node@v3
         with:
           node-version: 18  
+
+      - name: Verify npm Authentication
+        run: npm whoami || echo "Authentication failed"
 
       - name: Install Dependencies
         run: |
@@ -33,7 +44,13 @@ jobs:
         run: |
           cd npm-package
           npm pack 
-          ls -l
+          ls -l  # Debugging: Check if the .tgz file is created
+
+      # Find the generated package file dynamically
+      - name: Find Generated Package File
+        run: |
+          cd npm-package
+          echo "PACKAGE_FILE=$(ls *.tgz)" >> $GITHUB_ENV
 
       - name: Generate OIDC Token
         run: |

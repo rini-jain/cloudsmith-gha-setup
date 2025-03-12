@@ -1,0 +1,80 @@
+name: Cloudsmith OIDC Task 3
+
+on:
+  push:
+    branches:
+      - main  # Runs on push to the main branch
+
+permissions:
+  id-token: write  
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js and npm
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # Step 3: Install dependencies (if required)
+      - name: Install Dependencies
+        run: |
+          cd npm-package
+          npm install
+
+      # Step 4: Create a package using npm pack
+      - name: Build NPM Package
+        run: |
+          cd npm-package
+          npm pack
+          ls -l  # Debugging: List files to verify .tgz was created
+
+      # Step 5: Find the generated package file and store it in an env variable
+      - name: Find Package File
+        run: |
+          cd npm-package
+          echo "PACKAGE_FILE=$(ls *.tgz)" >> $GITHUB_ENV
+
+      # Step 6: Generate OIDC Token for Cloudsmith Authentication
+      - name: Generate OIDC Token
+        run: |
+          echo "Requesting OIDC Token..."
+          
+          value=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/rini-jain")
+
+          token=$(echo $value | jq '.value')
+
+          token_final=$(curl -X POST -H "Content-Type: application/json" \
+          -d "{\"oidc_token\":$token, \"service_slug\":\"github-actions-oidc\"}" \
+          https://api.cloudsmith.io/openid/rini-jain-RNYE/)
+
+          final_api_token=$(echo $token_final | jq -r '.token')
+          echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
+
+      # Step 7: Push the Package to Cloudsmith
+      - name: Push Package to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ env.CLOUDSMITH_API_KEY }}
+          command: "push"
+          format: "npm"
+          owner: "rini-jain-RNYE"  
+          repo: "cloudsmith-gha-setup"
+          file: "npm-package/${{ env.PACKAGE_FILE }}"
+          republish: "true"
+
+      # Step 8: Debug Cloudsmith API Call
+      - name: Debug Cloudsmith API
+        run: |
+          echo "Checking Cloudsmith Repository Access..."
+          curl -X GET "https://api.cloudsmith.io/v1/repos/rini-jain-RNYE/cloudsmith-gha-setup/" \
+          -H "Authorization: Bearer $CLOUDSMITH_API_KEY"

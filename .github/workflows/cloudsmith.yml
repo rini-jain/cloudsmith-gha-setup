@@ -15,6 +15,7 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
+
       - name: Authenticate npm
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
 
@@ -33,6 +34,7 @@ jobs:
           cd npm-package
           npm pack 
           ls -l
+
       - name: Generate OIDC Token
         run: |
           echo "Requesting OIDC Token..."
@@ -57,7 +59,7 @@ jobs:
           format: "npm"
           owner: "rini-jain-RNYE"  
           repo: "cloudsmith-gha-setup"  
-          file: "$(ls npm-package/*.tgz)"  # This ensures the latest .tgz file is picked
+          file: "npm-package/${{ env.PACKAGE_FILE }}" 
           republish: "true"
 
       - name: Debug Cloudsmith API Call

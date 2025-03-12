@@ -48,7 +48,7 @@ jobs:
           cd npm-package
           echo "===== Debugging npm install ====="
           npm config list
-          npm install --userconfig .npmrc
+          npm install --userconfig .npmrc --verbose
 
 
       # Step 5: Create a package using npm pack

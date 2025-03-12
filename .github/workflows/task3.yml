@@ -24,31 +24,11 @@ jobs:
         with:
           node-version: 18
 
-      # Debug Step 1: Check if npm registry is correctly set
-      - name: Ensure Correct npm Registry
-        run: |
-          npm config set registry https://registry.npmjs.org/
-          npm config get registry  # Should return "https://registry.npmjs.org/"
-
-           # Debug Step 2: Authenticate npm & Ensure .npmrc Exists in npm-package
-      - name: Authenticate npm
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > npm-package/.npmrc
-          npm config set registry https://registry.npmjs.org/
-          npm config get registry  
-          echo "===== .npmrc File Contents ====="
-          cat npm-package/.npmrc || echo "❌ No .npmrc file found"
-
-      # Debug Step 3: Verify npm Authentication
-      - name: Check npm Authentication
-        run: |
-          npm whoami || echo "❌ npm authentication failed"
+    
       - name: Install Dependencies
         run: |
           cd npm-package
-          echo "===== Debugging npm install ====="
-          npm config list
-          npm install --userconfig .npmrc --verbose
+          npm install
 
 
       # Step 5: Create a package using npm pack
@@ -56,13 +36,9 @@ jobs:
         run: |
           cd npm-package
           npm pack
-          ls -l  # Debugging: List files to verify .tgz was created
+         
 
-      # Step 6: Find the generated package file and store it in an env variable
-      - name: Find Package File
-        run: |
-          cd npm-package
-          echo "PACKAGE_FILE=$(ls *.tgz)" >> $GITHUB_ENV
+    
 
       # Step 7: Generate OIDC Token for Cloudsmith Authentication
       - name: Generate OIDC Token

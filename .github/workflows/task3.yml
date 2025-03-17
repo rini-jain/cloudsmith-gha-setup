@@ -14,37 +14,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository
+     
       - name: Check out repository
         uses: actions/checkout@v2
 
-      # Step 2: Set up Node.js
+     
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # Step 3: Install Dependencies
+      
       - name: Install Dependencies
         run: |
           cd npm-package
           npm install
 
-      # Step 4: Build NPM Package (Generate .tgz file)
+      
       - name: Build NPM Package
         run: |
           cd npm-package
           npm pack
           ls -l  # Debug: Verify the .tgz file was created
 
-      # Step 5: Capture the Generated .tgz Filename
+      
       - name: Find Package File
         run: |
           cd npm-package
           echo "PACKAGE_FILE=$(ls *.tgz)" >> $GITHUB_ENV
           echo "Discovered package file: $PACKAGE_FILE"
 
-      # Step 6: Generate OIDC Token for Cloudsmith Authentication
+    
       - name: Generate OIDC Token
         run: |
           echo "Requesting OIDC Token..."
@@ -60,7 +60,7 @@ jobs:
           final_api_token=$(echo $token_final | jq -r '.token')
           echo "CLOUDSMITH_API_KEY=$final_api_token" >> $GITHUB_ENV
 
-      # Step 7: Push Package to Cloudsmith (Referencing $PACKAGE_FILE)
+    
       - name: Push Package to Cloudsmith
         uses: cloudsmith-io/action@v0.5.3
         with:
